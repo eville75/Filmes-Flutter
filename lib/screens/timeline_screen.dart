@@ -84,8 +84,7 @@ class _TimelineScreenState extends State<TimelineScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Filmes Populares'),
-        // ESTA É A VERSÃO CORRETA: UMA ÚNICA LISTA 'actions'
-        // COM TODOS OS TRÊS BOTÕES DENTRO DELA.
+        // A VERSÃO CORRETA COM UMA ÚNICA LISTA 'actions'
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
@@ -94,9 +93,9 @@ class _TimelineScreenState extends State<TimelineScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.info_outline),
+            icon: const Icon(Icons.favorite_border),
             onPressed: () {
-              Navigator.pushNamed(context, AppRoutes.getRoute(AppRoute.about));
+              Navigator.pushNamed(context, AppRoutes.getRoute(AppRoute.favorites));
             },
           ),
           IconButton(

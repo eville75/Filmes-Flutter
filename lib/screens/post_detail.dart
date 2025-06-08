@@ -1,7 +1,7 @@
-// screens/post_detail.dart
-
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/movie.dart';
+import '../providers/favorites_provider.dart';
 import '../services/api_service.dart';
 
 class PostDetailScreen extends StatefulWidget {
@@ -13,57 +13,84 @@ class PostDetailScreen extends StatefulWidget {
 
 class _PostDetailScreenState extends State<PostDetailScreen> {
   Future<Movie>? _movieFuture;
+  int? _movieId;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final movieId = ModalRoute.of(context)!.settings.arguments as int?;
-    if (movieId != null && _movieFuture == null) {
-      _movieFuture = ApiService.fetchMovieDetails(movieId);
+    final receivedId = ModalRoute.of(context)!.settings.arguments as int?;
+    if (receivedId != null && _movieId == null) {
+      _movieId = receivedId;
+      _movieFuture = ApiService.fetchMovieDetails(_movieId!);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Detalhes'),
-      ),
-      body: FutureBuilder<Movie>(
-        future: _movieFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError || !snapshot.hasData) {
-            return Center(
-              child: Text(
-                'Não foi possível carregar os detalhes do filme.\n${snapshot.error ?? ''}',
-                textAlign: TextAlign.center,
-              ),
-            );
-          }
+    return FutureBuilder<Movie>(
+      future: _movieFuture,
+      builder: (context, snapshot) {
+        final movie = snapshot.data;
+        // O Consumer ouve as mudanças no FavoritesProvider
+        return Consumer<FavoritesProvider>(
+          builder: (context, favoritesProvider, child) {
+            final isFavorite = movie != null && favoritesProvider.isFavorite(movie.id);
 
-          final movie = snapshot.data!;
-          
-          // LÓGICA DE RESPONSIVIDADE COMEÇA AQUI
-          // Verifica a largura da tela para decidir qual layout usar
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.maxWidth > 700) { // Se a tela for larga (tablet/desktop)
-                return _buildWideLayout(movie);
-              } else { // Se a tela for estreita (celular)
-                return _buildNarrowLayout(movie);
-              }
-            },
-          );
-        },
-      ),
+            return Scaffold(
+              appBar: AppBar(
+                title: Text(movie?.title ?? 'Detalhes'),
+                actions: [
+                  // Apenas mostra o botão se o filme tiver carregado
+                  if (movie != null)
+                    IconButton(
+                      icon: Icon(
+                        isFavorite ? Icons.star : Icons.star_border,
+                        color: isFavorite ? Colors.amber : null,
+                      ),
+                      onPressed: () {
+                        // Chama a função para favoritar/desfavoritar
+                        favoritesProvider.toggleFavorite(movie.id);
+                      },
+                    ),
+                ],
+              ),
+              body: buildBody(snapshot),
+            );
+          },
+        );
+      },
     );
   }
 
-  // Layout para telas estreitas (Celular)
-  Widget _buildNarrowLayout(Movie movie) {
+  // O corpo da tela continua o mesmo, só o separamos em uma função
+  Widget buildBody(AsyncSnapshot<Movie> snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (snapshot.hasError || !snapshot.hasData) {
+      return Center(
+        child: Text(
+          'Não foi possível carregar os detalhes do filme.\n${snapshot.error ?? ''}',
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+    final movie = snapshot.data!;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 700) {
+          return _buildWideLayout(movie);
+        } else {
+          return _buildNarrowLayout(movie);
+        }
+      },
+    );
+  }
+
+  // As funções _buildWideLayout, _buildNarrowLayout, _buildMovieImage
+  // e _buildMovieDetails continuam aqui, sem nenhuma alteração.
+  // (O código que você já tinha)
+   Widget _buildNarrowLayout(Movie movie) {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,7 +102,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
-  // Layout para telas largas (Tablet/Desktop)
   Widget _buildWideLayout(Movie movie) {
     return SingleChildScrollView(
       child: Padding(
@@ -83,13 +109,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Coluna da Imagem
             Flexible(
               flex: 1,
               child: _buildMovieImage(movie, height: 500),
             ),
             const SizedBox(width: 24),
-            // Coluna dos Detalhes
             Flexible(
               flex: 2,
               child: _buildMovieDetails(movie, isWide: true),
@@ -100,7 +124,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
-  // Widget reutilizável para a imagem
   Widget _buildMovieImage(Movie movie, {required double height}) {
     final String imageUrl = movie.posterPath.isNotEmpty
         ? 'https://image.tmdb.org/t/p/w500${movie.posterPath}'
@@ -126,7 +149,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
-  // Widget reutilizável para os detalhes em texto
   Widget _buildMovieDetails(Movie movie, {required bool isWide}) {
     return Padding(
       padding: isWide ? EdgeInsets.zero : const EdgeInsets.all(16.0),
