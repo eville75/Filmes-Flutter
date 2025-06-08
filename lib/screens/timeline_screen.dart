@@ -4,6 +4,13 @@ import '../models/movie.dart';
 import '../services/api_service.dart';
 import '../widgets/movie_card.dart';
 
+// Enum para controlar o tipo de filtro de forma segura
+enum MovieSortOrder {
+  popular,
+  topRated,
+  nowPlaying,
+}
+
 class TimelineScreen extends StatefulWidget {
   const TimelineScreen({super.key});
 
@@ -12,6 +19,7 @@ class TimelineScreen extends StatefulWidget {
 }
 
 class _TimelineScreenState extends State<TimelineScreen> {
+  // Variáveis de estado
   final List<Movie> _movies = [];
   int _currentPage = 1;
   bool _isLoading = false;
@@ -19,6 +27,9 @@ class _TimelineScreenState extends State<TimelineScreen> {
   bool _hasMore = true;
   String? _error;
   final ScrollController _scrollController = ScrollController();
+  
+  // NOVA VARIÁVEL DE ESTADO: Guarda o filtro atual
+  MovieSortOrder _currentSortOrder = MovieSortOrder.popular;
 
   @override
   void initState() {
@@ -27,12 +38,28 @@ class _TimelineScreenState extends State<TimelineScreen> {
     _scrollController.addListener(_onScroll);
   }
 
+  // ATUALIZADO: Agora busca filmes com base no filtro
   Future<void> _fetchMovies() async {
     if (_isLoading || !_hasMore) return;
     setState(() => _isLoading = true);
 
     try {
-      final newMovies = await ApiService.fetchPopularMovies(page: _currentPage);
+      Future<List<Movie>> future;
+      // Decide qual função da API chamar com base no filtro
+      switch (_currentSortOrder) {
+        case MovieSortOrder.topRated:
+          future = ApiService.fetchTopRatedMovies(page: _currentPage);
+          break;
+        case MovieSortOrder.nowPlaying:
+          future = ApiService.fetchNowPlayingMovies(page: _currentPage);
+          break;
+        case MovieSortOrder.popular:
+        default:
+          future = ApiService.fetchPopularMovies(page: _currentPage);
+          break;
+      }
+
+      final newMovies = await future;
       setState(() {
         if (newMovies.isEmpty) {
           _hasMore = false;
@@ -42,9 +69,7 @@ class _TimelineScreenState extends State<TimelineScreen> {
         }
       });
     } catch (e) {
-      setState(() {
-        _error = 'Falha ao conectar com o servidor. Verifique sua conexão.';
-      });
+      setState(() => _error = 'Falha ao conectar. Verifique sua conexão.');
     } finally {
       setState(() {
         _isLoading = false;
@@ -53,7 +78,70 @@ class _TimelineScreenState extends State<TimelineScreen> {
     }
   }
 
-  void _onScroll() {
+  // NOVO: Função para trocar o filtro e recarregar a lista
+  void _changeSortOrder(MovieSortOrder newOrder) {
+    if (_currentSortOrder == newOrder) return; // Não faz nada se o filtro for o mesmo
+
+    setState(() {
+      _currentSortOrder = newOrder;
+      _movies.clear();
+      _currentPage = 1;
+      _hasMore = true;
+      _initialLoading = true;
+      _error = null;
+    });
+    _fetchMovies(); // Busca os filmes com o novo filtro
+  }
+
+  // ATUALIZADO: O título da tela agora é dinâmico
+  String get _appBarTitle {
+    switch (_currentSortOrder) {
+      case MovieSortOrder.topRated:
+        return 'Mais Bem Avaliados';
+      case MovieSortOrder.nowPlaying:
+        return 'Em Cartaz';
+      case MovieSortOrder.popular:
+      default:
+        return 'Filmes Populares';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_appBarTitle),
+        actions: [
+          IconButton(icon: const Icon(Icons.search), onPressed: () => Navigator.pushNamed(context, AppRoutes.getRoute(AppRoute.search))),
+          IconButton(icon: const Icon(Icons.favorite_border), onPressed: () => Navigator.pushNamed(context, AppRoutes.getRoute(AppRoute.favorites))),
+          // NOVO: Botão de Menu para os Filtros
+          PopupMenuButton<MovieSortOrder>(
+            icon: const Icon(Icons.filter_list),
+            onSelected: _changeSortOrder,
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<MovieSortOrder>>[
+              const PopupMenuItem<MovieSortOrder>(
+                value: MovieSortOrder.popular,
+                child: Text('Populares'),
+              ),
+              const PopupMenuItem<MovieSortOrder>(
+                value: MovieSortOrder.topRated,
+                child: Text('Melhores Avaliações'),
+              ),
+              const PopupMenuItem<MovieSortOrder>(
+                value: MovieSortOrder.nowPlaying,
+                child: Text('Lançamentos Recentes'),
+              ),
+            ],
+          ),
+          IconButton(icon: const Icon(Icons.settings), onPressed: () => Navigator.pushNamed(context, AppRoutes.getRoute(AppRoute.settings))),
+        ],
+      ),
+      body: _buildBody(),
+    );
+  }
+
+  // O resto do arquivo (_onScroll, dispose, _retry, _buildBody) continua o mesmo.
+   void _onScroll() {
     if (_scrollController.position.pixels >=
             _scrollController.position.maxScrollExtent - 200 &&
         !_isLoading) {
@@ -77,38 +165,6 @@ class _TimelineScreenState extends State<TimelineScreen> {
       _initialLoading = true;
     });
     _fetchMovies();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Filmes Populares'),
-        // A VERSÃO CORRETA COM UMA ÚNICA LISTA 'actions'
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              Navigator.pushNamed(context, AppRoutes.getRoute(AppRoute.search));
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.favorite_border),
-            onPressed: () {
-              Navigator.pushNamed(context, AppRoutes.getRoute(AppRoute.favorites));
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              Navigator.pushNamed(
-                  context, AppRoutes.getRoute(AppRoute.settings));
-            },
-          ),
-        ],
-      ),
-      body: _buildBody(),
-    );
   }
 
   Widget _buildBody() {
@@ -138,7 +194,7 @@ class _TimelineScreenState extends State<TimelineScreen> {
     }
 
     if (_movies.isEmpty) {
-      return const Center(child: Text('Nenhum filme popular foi encontrado.'));
+      return const Center(child: Text('Nenhum filme encontrado para este filtro.'));
     }
 
     return ListView.builder(
