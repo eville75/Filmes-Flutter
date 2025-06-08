@@ -1,3 +1,5 @@
+// lib/services/api_service.dart
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/movie.dart';
@@ -7,17 +9,13 @@ class ApiService {
   static const String _baseUrl = 'https://api.themoviedb.org/3';
   static const String _language = 'pt-BR';
 
-  // Função 1: Populares
-  static Future<List<Movie>> fetchPopularMovies({int page = 1}) async {
-    final response = await http.get(Uri.parse(
-        '$_baseUrl/movie/popular?api_key=$_apiKey&language=$_language&page=$page'));
-    return _parseMovies(response);
-  }
+  // ... (outras funções fetch sem alteração) ...
 
-  // Função 2: Detalhes de um Filme
   static Future<Movie> fetchMovieDetails(int movieId) async {
+    // ATUALIZADO: Adicionamos 'append_to_response=videos' para buscar os trailers
     final response = await http.get(Uri.parse(
-        '$_baseUrl/movie/$movieId?api_key=$_apiKey&language=$_language'));
+        '$_baseUrl/movie/$movieId?api_key=$_apiKey&language=$_language&append_to_response=videos'));
+        
     if (response.statusCode == 200) {
       return Movie.fromJson(json.decode(response.body));
     } else {
@@ -25,7 +23,13 @@ class ApiService {
     }
   }
 
-  // Função 3: Busca
+  // ... (O resto do arquivo ApiService continua igual)
+    static Future<List<Movie>> fetchPopularMovies({int page = 1}) async {
+    final response = await http.get(Uri.parse(
+        '$_baseUrl/movie/popular?api_key=$_apiKey&language=$_language&page=$page'));
+    return _parseMovies(response);
+  }
+
   static Future<List<Movie>> searchMovies(String query) async {
     final encodedQuery = Uri.encodeComponent(query);
     final response = await http.get(Uri.parse(
@@ -33,21 +37,18 @@ class ApiService {
     return _parseMovies(response);
   }
 
-  // Função 4: Melhores Avaliações
   static Future<List<Movie>> fetchTopRatedMovies({int page = 1}) async {
     final response = await http.get(Uri.parse(
         '$_baseUrl/movie/top_rated?api_key=$_apiKey&language=$_language&page=$page'));
     return _parseMovies(response);
   }
 
-  // Função 5: Em Cartaz (Lançamentos)
   static Future<List<Movie>> fetchNowPlayingMovies({int page = 1}) async {
     final response = await http.get(Uri.parse(
         '$_baseUrl/movie/now_playing?api_key=$_apiKey&language=$_language&page=$page'));
     return _parseMovies(response);
   }
 
-  // Função auxiliar para converter a resposta da API em uma lista de filmes
   static List<Movie> _parseMovies(http.Response response) {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);

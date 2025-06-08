@@ -4,6 +4,15 @@ import 'Core/RouteManager.dart';
 import 'providers/favorites_provider.dart';
 import 'providers/theme_provider.dart';
 
+// Cores da nova paleta inspirada no TMDB
+class AppColors {
+  static const Color tmdbDarkBlue = Color(0xFF0d253f);
+  static const Color tmdbLightBlue = Color(0xFF01b4e4);
+  static const Color tmdbLighterGreen = Color(0xFF90cea1);
+  static const Color almostBlack = Color(0xFF031d33);
+  static const Color nearWhite = Color(0xFFF5F5F5);
+}
+
 void main() {
   runApp(
     MultiProvider(
@@ -16,7 +25,6 @@ void main() {
   );
 }
 
-// A CLASSE MainApp PRECISA DESTE MÉTODO 'build' DENTRO DELA
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
@@ -27,27 +35,43 @@ class MainApp extends StatelessWidget {
         return MaterialApp(
           title: 'Filmes Populares',
           themeMode: themeProvider.themeMode,
+          
+          // NOVA PALETA - MODO CLARO
           theme: ThemeData(
             brightness: Brightness.light,
-            primarySwatch: Colors.teal,
-            scaffoldBackgroundColor: const Color(0xFFF3F4F6),
+            primaryColor: AppColors.tmdbDarkBlue,
+            scaffoldBackgroundColor: AppColors.nearWhite,
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.tmdbDarkBlue,
+              secondary: AppColors.tmdbLightBlue,
+              onPrimary: Colors.white,
+            ),
             appBarTheme: const AppBarTheme(
-              backgroundColor: Colors.teal,
+              backgroundColor: AppColors.tmdbDarkBlue,
+              foregroundColor: Colors.white,
             ),
           ),
+
+          // NOVA PALETA - MODO ESCURO
           darkTheme: ThemeData(
-              brightness: Brightness.dark,
-              primarySwatch: Colors.teal,
-              scaffoldBackgroundColor: const Color.fromARGB(255, 18, 27, 34),
-              appBarTheme: const AppBarTheme(
-                backgroundColor: Color.fromARGB(255, 25, 39, 45),
-              ),
-              cardTheme:
-                  const CardTheme(color: Color.fromARGB(255, 25, 39, 45)),
-              iconButtonTheme: IconButtonThemeData(
-                  style: ButtonStyle(
-                      foregroundColor:
-                          MaterialStateProperty.all(Colors.white)))),
+            brightness: Brightness.dark,
+            primaryColor: AppColors.tmdbLightBlue,
+            scaffoldBackgroundColor: AppColors.almostBlack,
+            colorScheme: const ColorScheme.dark(
+              primary: AppColors.tmdbLightBlue,
+              secondary: AppColors.tmdbLighterGreen,
+              surface: AppColors.tmdbDarkBlue, // Cor dos cards e dialogs
+              onPrimary: Colors.black,
+            ),
+            cardTheme: const CardTheme(
+              color: AppColors.tmdbDarkBlue,
+            ),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: AppColors.tmdbDarkBlue,
+              foregroundColor: Colors.white,
+            ),
+          ),
+
           debugShowCheckedModeBanner: false,
           initialRoute: AppRoutes.getRoute(AppRoute.timeline),
           routes: AppRoutes.routes,

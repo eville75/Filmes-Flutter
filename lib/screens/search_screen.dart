@@ -11,6 +11,7 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
+  // ... (a lógica interna permanece a mesma) ...
   final TextEditingController _searchController = TextEditingController();
   List<Movie> _results = [];
   bool _isLoading = false;
@@ -18,12 +19,8 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _searchAttempted = false;
 
   Future<void> _performSearch() async {
-    // Esconde o teclado
     FocusScope.of(context).unfocus();
-
-    if (_searchController.text.trim().isEmpty) {
-      return;
-    }
+    if (_searchController.text.trim().isEmpty) return;
 
     setState(() {
       _isLoading = true;
@@ -33,75 +30,50 @@ class _SearchScreenState extends State<SearchScreen> {
 
     try {
       final movies = await ApiService.searchMovies(_searchController.text.trim());
-      setState(() {
-        _results = movies;
-      });
+      setState(() => _results = movies);
     } catch (e) {
-      setState(() {
-        _error = "Falha ao realizar a busca. Tente novamente.";
-      });
+      setState(() => _error = "Falha ao realizar a busca. Tente novamente.");
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
     }
   }
 
   @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Buscar Filmes'),
       ),
       body: Column(
         children: [
-          // Campo de busca e botão
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Digite o nome do filme...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onSubmitted: (value) => _performSearch(),
-                  ),
+            child: TextField(
+              controller: _searchController,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: 'Digite o nome do filme...',
+                prefixIcon: Icon(Icons.search, color: theme.hintColor),
+                filled: true,
+                fillColor: theme.colorScheme.surface.withOpacity(0.5),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide.none,
                 ),
-                const SizedBox(width: 12),
-                IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: _performSearch,
-                  style: IconButton.styleFrom(
-                    padding: const EdgeInsets.all(16),
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  ),
-                ),
-              ],
+              ),
+              onSubmitted: (value) => _performSearch(),
             ),
           ),
-          // Área de resultados
-          Expanded(
-            child: _buildResults(),
-          ),
+          Expanded(child: _buildResults()),
         ],
       ),
     );
   }
 
   Widget _buildResults() {
-    if (_isLoading) {
+    // ... (a lógica interna permanece a mesma) ...
+        if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -118,6 +90,7 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     return ListView.builder(
+      padding: const EdgeInsets.only(bottom: 16),
       itemCount: _results.length,
       itemBuilder: (context, index) {
         return MovieCard(movie: _results[index]);

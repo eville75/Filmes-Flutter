@@ -1,5 +1,7 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../models/movie.dart';
 import '../providers/favorites_provider.dart';
 import '../services/api_service.dart';
@@ -14,6 +16,7 @@ class PostDetailScreen extends StatefulWidget {
 class _PostDetailScreenState extends State<PostDetailScreen> {
   Future<Movie>? _movieFuture;
   int? _movieId;
+  YoutubePlayerController? _youtubeController;
 
   @override
   void didChangeDependencies() {
@@ -26,35 +29,37 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   @override
+  void dispose() {
+    _youtubeController?.dispose();
+    super.dispose();
+  }
+
+  void _initializeYoutubeController(String trailerKey) {
+    _youtubeController = YoutubePlayerController(
+      initialVideoId: trailerKey,
+      flags: const YoutubePlayerFlags(
+        autoPlay: false,
+        mute: false,
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return FutureBuilder<Movie>(
       future: _movieFuture,
       builder: (context, snapshot) {
         final movie = snapshot.data;
-        // O Consumer ouve as mudanças no FavoritesProvider
+        if (movie?.trailerKey != null && _youtubeController == null) {
+          _initializeYoutubeController(movie!.trailerKey!);
+        }
+
         return Consumer<FavoritesProvider>(
           builder: (context, favoritesProvider, child) {
             final isFavorite = movie != null && favoritesProvider.isFavorite(movie.id);
 
             return Scaffold(
-              appBar: AppBar(
-                title: Text(movie?.title ?? 'Detalhes'),
-                actions: [
-                  // Apenas mostra o botão se o filme tiver carregado
-                  if (movie != null)
-                    IconButton(
-                      icon: Icon(
-                        isFavorite ? Icons.star : Icons.star_border,
-                        color: isFavorite ? Colors.amber : null,
-                      ),
-                      onPressed: () {
-                        // Chama a função para favoritar/desfavoritar
-                        favoritesProvider.toggleFavorite(movie.id);
-                      },
-                    ),
-                ],
-              ),
-              body: buildBody(snapshot),
+              body: buildBody(snapshot, isFavorite, favoritesProvider),
             );
           },
         );
@@ -62,143 +67,106 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
-  // O corpo da tela continua o mesmo, só o separamos em uma função
-  Widget buildBody(AsyncSnapshot<Movie> snapshot) {
+  Widget buildBody(AsyncSnapshot<Movie> snapshot, bool isFavorite, FavoritesProvider favoritesProvider) {
     if (snapshot.connectionState == ConnectionState.waiting) {
       return const Center(child: CircularProgressIndicator());
     }
     if (snapshot.hasError || !snapshot.hasData) {
-      return Center(
-        child: Text(
-          'Não foi possível carregar os detalhes do filme.\n${snapshot.error ?? ''}',
-          textAlign: TextAlign.center,
-        ),
-      );
+      return Center(child: Text('Erro ao carregar filme: ${snapshot.error}'));
     }
+
     final movie = snapshot.data!;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth > 700) {
-          return _buildWideLayout(movie);
-        } else {
-          return _buildNarrowLayout(movie);
-        }
-      },
-    );
-  }
+    final theme = Theme.of(context);
+    final String imageUrl = movie.posterPath.isNotEmpty
+        ? 'https://image.tmdb.org/t/p/w780${movie.posterPath}'
+        : '';
 
-  // As funções _buildWideLayout, _buildNarrowLayout, _buildMovieImage
-  // e _buildMovieDetails continuam aqui, sem nenhuma alteração.
-  // (O código que você já tinha)
-   Widget _buildNarrowLayout(Movie movie) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildMovieImage(movie, height: 350),
-          _buildMovieDetails(movie, isWide: false),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWideLayout(Movie movie) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Flexible(
-              flex: 1,
-              child: _buildMovieImage(movie, height: 500),
+    return CustomScrollView(
+      slivers: [
+        SliverAppBar(
+          expandedHeight: 250.0,
+          pinned: true,
+          floating: false,
+          elevation: 4,
+          backgroundColor: theme.scaffoldBackgroundColor,
+          flexibleSpace: FlexibleSpaceBar(
+            title: Text(
+              movie.title,
+              style: TextStyle(fontSize: 16, shadows: [
+                Shadow(blurRadius: 4, color: Colors.black.withOpacity(0.7))
+              ]),
             ),
-            const SizedBox(width: 24),
-            Flexible(
-              flex: 2,
-              child: _buildMovieDetails(movie, isWide: true),
+            background: Hero(
+              tag: 'poster-${movie.id}',
+              child: imageUrl.isNotEmpty
+                  ? Image.network(imageUrl, fit: BoxFit.cover)
+                  : Container(color: Colors.grey),
+            ),
+          ),
+          actions: [
+            IconButton(
+              icon: Icon(
+                isFavorite ? Icons.favorite : Icons.favorite_border,
+                color: isFavorite ? Colors.red.shade400 : null,
+              ),
+              onPressed: () => favoritesProvider.toggleFavorite(movie.id),
             ),
           ],
         ),
-      ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (_youtubeController != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Trailer', style: theme.textTheme.titleLarge),
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: YoutubePlayer(controller: _youtubeController!),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                Text('Sinopse', style: theme.textTheme.titleLarge),
+                const SizedBox(height: 8),
+                Text(
+                  movie.overview.isNotEmpty ? movie.overview : 'Sinopse não disponível.',
+                  style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
+                ),
+                const SizedBox(height: 24),
+                
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildInfoChip(Icons.calendar_today, 'Lançamento', movie.releaseDate, theme),
+                    _buildInfoChip(Icons.star, 'Nota', movie.voteAverage.toStringAsFixed(1), theme),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildMovieImage(Movie movie, {required double height}) {
-    final String imageUrl = movie.posterPath.isNotEmpty
-        ? 'https://image.tmdb.org/t/p/w500${movie.posterPath}'
-        : 'https://via.placeholder.com/400x600';
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Image.network(
-        imageUrl,
-        height: height,
-        width: double.infinity,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            height: height,
-            color: Colors.grey[200],
-            child: const Center(
-              child: Icon(Icons.broken_image, size: 80, color: Colors.grey),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildMovieDetails(Movie movie, {required bool isWide}) {
-    return Padding(
-      padding: isWide ? EdgeInsets.zero : const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            movie.title,
-            style: TextStyle(
-              fontSize: isWide ? 32 : 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
-              const SizedBox(width: 8),
-              Text(
-                'Lançamento: ${movie.releaseDate}',
-                style: const TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.star, size: 16, color: Colors.amber),
-              const SizedBox(width: 8),
-              Text(
-                'Nota: ${movie.voteAverage.toStringAsFixed(1)}',
-                style: const TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'Sinopse',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            movie.overview.isNotEmpty ? movie.overview : 'Sinopse não disponível.',
-            style: const TextStyle(fontSize: 16, height: 1.5),
-          ),
-        ],
-      ),
+  Widget _buildInfoChip(IconData icon, String label, String value, ThemeData theme) {
+    return Column(
+      children: [
+        Icon(icon, color: theme.colorScheme.secondary, size: 28),
+        const SizedBox(height: 4),
+        Text(label, style: theme.textTheme.bodySmall),
+        const SizedBox(height: 2),
+        Text(value, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+      ],
     );
   }
 }

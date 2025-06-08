@@ -13,39 +13,47 @@ class FavoritesScreen extends StatefulWidget {
 }
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
-  // Esta função busca os detalhes de todos os filmes favoritos
+  // ... (a lógica interna permanece a mesma) ...
   Future<List<Movie>> _fetchFavoriteMovies(List<int> movieIds) {
-    // Cria uma lista de Futures, onde cada Future é uma chamada à API
-    final List<Future<Movie>> futureMovies = movieIds.map((id) {
-      return ApiService.fetchMovieDetails(id);
-    }).toList();
-
-    // Future.wait aguarda que todas as chamadas à API terminem
+    final List<Future<Movie>> futureMovies =
+        movieIds.map((id) => ApiService.fetchMovieDetails(id)).toList();
     return Future.wait(futureMovies);
   }
 
   @override
   Widget build(BuildContext context) {
-    // Ouve o FavoritesProvider para obter a lista de IDs
-    final favoriteIds = Provider.of<FavoritesProvider>(context).favoriteMovieIds;
+    final favoriteIds =
+        Provider.of<FavoritesProvider>(context).favoriteMovieIds;
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Meus Favoritos'),
       ),
       body: favoriteIds.isEmpty
-          // Se não houver favoritos, mostra uma mensagem simples
-          ? const Center(
-              child: Text(
-                'Você ainda não adicionou nenhum filme aos favoritos.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, color: Colors.grey),
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.movie_filter_outlined, size: 80, color: Colors.grey.shade600),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Sua lista está vazia',
+                    style: theme.textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Marque filmes com uma estrela para adicioná-los aqui.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey.shade500),
+                  ),
+                ],
               ),
             )
-          // Se houver favoritos, usa o FutureBuilder para buscá-los e exibi-los
           : FutureBuilder<List<Movie>>(
               future: _fetchFavoriteMovies(favoriteIds),
               builder: (context, snapshot) {
+                // ... (a lógica interna permanece a mesma) ...
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
@@ -55,9 +63,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return const Center(child: Text('Não foi possível carregar os detalhes dos filmes.'));
                 }
-
                 final movies = snapshot.data!;
                 return ListView.builder(
+                  padding: const EdgeInsets.only(top: 8, bottom: 16),
                   itemCount: movies.length,
                   itemBuilder: (context, index) {
                     return MovieCard(movie: movies[index]);
