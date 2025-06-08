@@ -1,8 +1,5 @@
-// ADICIONE ESTAS DUAS LINHAS IMPORTANTES
 import 'package:flutter/material.dart';
 import '../Core/RouteManager.dart';
-
-// O resto do seu código que estava correto...
 import '../models/movie.dart';
 import '../services/api_service.dart';
 import '../widgets/movie_card.dart';
@@ -87,7 +84,15 @@ class _TimelineScreenState extends State<TimelineScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Filmes Populares'),
+        // ESTA É A VERSÃO CORRETA: UMA ÚNICA LISTA 'actions'
+        // COM TODOS OS TRÊS BOTÕES DENTRO DELA.
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              Navigator.pushNamed(context, AppRoutes.getRoute(AppRoute.search));
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.info_outline),
             onPressed: () {
