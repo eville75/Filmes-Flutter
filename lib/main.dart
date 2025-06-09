@@ -12,7 +12,6 @@ class AppColors {
   static const Color lightPrimary = Color(0xFF1976D2);
   static const Color lightText = Color(0xFF111111);
   static const Color lightTextSecondary = Color(0xFF555555);
-  static const Color lightChip = Color(0xFFE3F2FD);
 
   // Cores Modo Escuro
   static const Color darkBg = Color(0xFF121212);
@@ -20,7 +19,6 @@ class AppColors {
   static const Color darkPrimary = Color(0xFF90CAF9);
   static const Color darkText = Color(0xFFFFFFFF);
   static const Color darkTextSecondary = Color(0xFFBBBBBB);
-  static const Color darkChip = Color(0xFF263238);
 }
 
 void main() {
@@ -43,17 +41,17 @@ class MainApp extends StatelessWidget {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp(
-          title: 'Filmes Populares',
+          title: 'CineApp',
           themeMode: themeProvider.themeMode,
           
-          // TEMA MODO CLARO - Implementação da sua paleta
+          // TEMA MODO CLARO
           theme: ThemeData(
             brightness: Brightness.light,
             scaffoldBackgroundColor: AppColors.lightBg,
             primaryColor: AppColors.lightPrimary,
             colorScheme: const ColorScheme.light(
               primary: AppColors.lightPrimary,
-              secondary: AppColors.lightPrimary, // Usando a mesma cor de destaque
+              secondary: AppColors.lightPrimary,
               onPrimary: Colors.white,
               surface: AppColors.lightCard,
             ),
@@ -62,53 +60,47 @@ class MainApp extends StatelessWidget {
               elevation: 2,
             ),
             appBarTheme: const AppBarTheme(
-              backgroundColor: AppColors.lightCard,
-              foregroundColor: AppColors.lightText, // Cor do título e ícones
-              elevation: 1,
+              backgroundColor: AppColors.lightBg,
+              foregroundColor: AppColors.lightText,
+              elevation: 0,
             ),
             textTheme: const TextTheme(
               bodyMedium: TextStyle(color: AppColors.lightText),
               bodySmall: TextStyle(color: AppColors.lightTextSecondary),
             ),
             chipTheme: const ChipThemeData(
-              backgroundColor: AppColors.lightChip,
+              backgroundColor: Color(0xFFE3F2FD),
               labelStyle: TextStyle(color: AppColors.lightPrimary, fontWeight: FontWeight.w600),
             ),
-            dividerTheme: const DividerThemeData(
-              color: Colors.black12,
-            )
+            dividerTheme: const DividerThemeData(color: Colors.black12),
           ),
 
-          // TEMA MODO ESCURO - Implementação da sua paleta
+          // TEMA MODO ESCURO
           darkTheme: ThemeData(
             brightness: Brightness.dark,
             scaffoldBackgroundColor: AppColors.darkBg,
             primaryColor: AppColors.darkPrimary,
             colorScheme: const ColorScheme.dark(
               primary: AppColors.darkPrimary,
-              secondary: AppColors.darkPrimary, // Cor de destaque
+              secondary: AppColors.darkPrimary,
               onPrimary: Colors.black,
               surface: AppColors.darkCard,
             ),
-            cardTheme: const CardTheme(
-              color: AppColors.darkCard,
-            ),
+            cardTheme: const CardTheme(color: AppColors.darkCard),
             appBarTheme: const AppBarTheme(
               backgroundColor: AppColors.darkBg,
               foregroundColor: AppColors.darkText,
-              elevation: 1,
+              elevation: 0,
             ),
             textTheme: const TextTheme(
               bodyMedium: TextStyle(color: AppColors.darkText),
               bodySmall: TextStyle(color: AppColors.darkTextSecondary),
             ),
             chipTheme: const ChipThemeData(
-              backgroundColor: AppColors.darkChip,
+              backgroundColor: Color(0xFF263238),
               labelStyle: TextStyle(color: AppColors.darkPrimary, fontWeight: FontWeight.w600),
             ),
-            dividerTheme: const DividerThemeData(
-              color: Colors.white12,
-            )
+            dividerTheme: const DividerThemeData(color: Colors.white12),
           ),
 
           debugShowCheckedModeBanner: false,

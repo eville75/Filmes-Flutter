@@ -51,7 +51,7 @@ class SettingsScreen extends StatelessWidget {
                       children: [
                         const TextSpan(text: 'Desenvolvido por: '),
                         TextSpan(
-                          text: '[Seu Nome Completo Aqui]', // <-- TROQUE PELO SEU NOME
+                          text: 'Eville Vitória Nunes Coelho',
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ],

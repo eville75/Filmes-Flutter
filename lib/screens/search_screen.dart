@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/movie.dart';
 import '../services/api_service.dart';
-import '../widgets/movie_card.dart';
+import '../widgets/movie_poster_card.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -11,7 +11,6 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  // ... (a lógica interna permanece a mesma) ...
   final TextEditingController _searchController = TextEditingController();
   List<Movie> _results = [];
   bool _isLoading = false;
@@ -21,13 +20,7 @@ class _SearchScreenState extends State<SearchScreen> {
   Future<void> _performSearch() async {
     FocusScope.of(context).unfocus();
     if (_searchController.text.trim().isEmpty) return;
-
-    setState(() {
-      _isLoading = true;
-      _error = null;
-      _searchAttempted = true;
-    });
-
+    setState(() { _isLoading = true; _error = null; _searchAttempted = true; });
     try {
       final movies = await ApiService.searchMovies(_searchController.text.trim());
       setState(() => _results = movies);
@@ -36,6 +29,12 @@ class _SearchScreenState extends State<SearchScreen> {
     } finally {
       setState(() => _isLoading = false);
     }
+  }
+  
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -72,28 +71,26 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildResults() {
-    // ... (a lógica interna permanece a mesma) ...
-        if (_isLoading) {
+    if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-
     if (_error != null) {
       return Center(child: Text(_error!));
     }
-
     if (!_searchAttempted) {
-      return const Center(child: Text('Digite algo para buscar um filme.'));
+      return const Center(child: Text('Digite algo para procurar um filme.'));
     }
-
     if (_results.isEmpty) {
       return Center(child: Text('Nenhum resultado encontrado para "${_searchController.text}".'));
     }
-
-    return ListView.builder(
-      padding: const EdgeInsets.only(bottom: 16),
+    return GridView.builder(
+      padding: const EdgeInsets.all(12),
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 200, childAspectRatio: 0.68,
+          crossAxisSpacing: 12, mainAxisSpacing: 12),
       itemCount: _results.length,
       itemBuilder: (context, index) {
-        return MovieCard(movie: _results[index]);
+        return MoviePosterCard(movie: _results[index]);
       },
     );
   }

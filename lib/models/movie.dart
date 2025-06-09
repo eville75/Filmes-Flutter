@@ -1,3 +1,6 @@
+// Este arquivo não deve ter nenhum import do 'material.dart' ou de rotas.
+// Apenas a definição da classe.
+
 class Movie {
   final int id;
   final String title;
@@ -6,8 +9,8 @@ class Movie {
   final String releaseDate;
   final double voteAverage;
   final String? trailerKey;
-  final List<int> genreIds; // <-- NOVO CAMPO PARA OS IDs DOS GÊNEROS
-
+  final List<int> genreIds;
+  
   Movie({
     required this.id,
     required this.title,
@@ -16,7 +19,7 @@ class Movie {
     required this.releaseDate,
     required this.voteAverage,
     this.trailerKey,
-    required this.genreIds, // <-- NOVO PARÂMETRO
+    required this.genreIds,
   });
 
   factory Movie.fromJson(Map<String, dynamic> json) {
@@ -27,20 +30,16 @@ class Movie {
         (video) => video['type'] == 'Trailer' && video['official'] == true,
         orElse: () => videos.firstWhere((video) => video['type'] == 'Trailer', orElse: () => null),
       );
-      if (officialTrailer != null) {
-        key = officialTrailer['key'];
-      }
+      if (officialTrailer != null) { key = officialTrailer['key']; }
     }
-
     return Movie(
       id: json['id'],
-      title: json['title'],
-      overview: json['overview'],
+      title: json['title'] ?? 'Título Desconhecido',
+      overview: json['overview'] ?? '',
       posterPath: json['poster_path'] ?? '',
       releaseDate: json['release_date'] ?? 'N/A',
-      voteAverage: (json['vote_average'] as num).toDouble(),
+      voteAverage: (json['vote_average'] as num? ?? 0.0).toDouble(),
       trailerKey: key,
-      // Pega a lista de IDs de gêneros da API
       genreIds: List<int>.from(json['genre_ids'] ?? (json['genres'] as List? ?? []).map((g) => g['id'])),
     );
   }

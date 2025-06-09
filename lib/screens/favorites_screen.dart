@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/movie.dart';
 import '../providers/favorites_provider.dart';
 import '../services/api_service.dart';
-import '../widgets/movie_card.dart';
+import '../widgets/movie_poster_card.dart';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
@@ -13,7 +13,6 @@ class FavoritesScreen extends StatefulWidget {
 }
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
-  // ... (a lógica interna permanece a mesma) ...
   Future<List<Movie>> _fetchFavoriteMovies(List<int> movieIds) {
     final List<Future<Movie>> futureMovies =
         movieIds.map((id) => ApiService.fetchMovieDetails(id)).toList();
@@ -32,28 +31,30 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       ),
       body: favoriteIds.isEmpty
           ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.movie_filter_outlined, size: 80, color: Colors.grey.shade600),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Sua lista está vazia',
-                    style: theme.textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Marque filmes com uma estrela para adicioná-los aqui.',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey.shade500),
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.favorite_outline, size: 80, color: theme.textTheme.bodySmall?.color),
+                    const SizedBox(height: 16),
+                    Text(
+                      'A sua lista de favoritos está vazia',
+                      style: theme.textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Vá para a tela de detalhes de um filme para adicioná-lo aqui.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodySmall?.color),
+                    ),
+                  ],
+                ),
               ),
             )
           : FutureBuilder<List<Movie>>(
               future: _fetchFavoriteMovies(favoriteIds),
               builder: (context, snapshot) {
-                // ... (a lógica interna permanece a mesma) ...
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
@@ -64,11 +65,14 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   return const Center(child: Text('Não foi possível carregar os detalhes dos filmes.'));
                 }
                 final movies = snapshot.data!;
-                return ListView.builder(
-                  padding: const EdgeInsets.only(top: 8, bottom: 16),
+                return GridView.builder(
+                  padding: const EdgeInsets.all(12),
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 200, childAspectRatio: 0.68,
+                      crossAxisSpacing: 12, mainAxisSpacing: 12),
                   itemCount: movies.length,
                   itemBuilder: (context, index) {
-                    return MovieCard(movie: movies[index]);
+                    return MoviePosterCard(movie: movies[index]);
                   },
                 );
               },

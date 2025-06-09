@@ -7,7 +7,6 @@ import '../services/api_service.dart';
 
 class PostDetailScreen extends StatefulWidget {
   const PostDetailScreen({super.key});
-
   @override
   State<PostDetailScreen> createState() => _PostDetailScreenState();
 }
@@ -80,7 +79,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Banner de Imagem / Trailer
           Stack(
             alignment: Alignment.center,
             children: [
@@ -104,7 +102,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       : Container(color: Colors.grey.shade800),
                 ),
               ),
-              // Botão Play (se o trailer existir e não estiver tocando)
               if (!_showPlayer && movie.trailerKey != null)
                 GestureDetector(
                   onTap: () => _initializeAndPlayYoutube(movie.trailerKey!),
@@ -114,7 +111,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     child: const Icon(Icons.play_arrow, color: Colors.white, size: 50),
                   ),
                 ),
-              // Botão de Voltar Flutuante
               Positioned(
                 top: 40,
                 left: 16,
@@ -128,14 +124,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               ),
             ],
           ),
-
-          // 2. Conteúdo Principal
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Título e Botão de Favoritar
                 Consumer<FavoritesProvider>(
                   builder: (context, favoritesProvider, child) {
                     final isFavorite = favoritesProvider.isFavorite(movie.id);
@@ -170,20 +163,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   },
                 ),
                 const SizedBox(height: 12),
-                
-                // Gêneros
                 _buildGenreChips(movie.genreIds, theme),
                 const SizedBox(height: 24),
-                
-                // Info (Nota e Lançamento)
                 _buildInfoRow(movie, theme),
                 const SizedBox(height: 24),
-
-                // Divisor da Sinopse
                 _buildSynopsisDivider(theme),
                 const SizedBox(height: 12),
-
-                // Texto da Sinopse
                 Text(
                   movie.overview.isNotEmpty ? movie.overview : 'Sinopse não disponível.',
                   style: theme.textTheme.bodyLarge?.copyWith(
@@ -200,7 +185,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
-  // Funções Auxiliares (Helpers) para construir a UI
   Widget _buildInfoRow(Movie movie, ThemeData theme) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
@@ -237,9 +221,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       runSpacing: 8.0,
       children: genres.map((genre) => Chip(
         label: Text(genre!),
-        backgroundColor: theme.colorScheme.secondary.withOpacity(0.15),
-        labelStyle: TextStyle(color: theme.colorScheme.secondary, fontWeight: FontWeight.w600),
-        side: BorderSide(color: theme.colorScheme.secondary.withOpacity(0.3)),
+        backgroundColor: theme.chipTheme.backgroundColor,
+        labelStyle: theme.chipTheme.labelStyle,
+        side: BorderSide(color: theme.chipTheme.labelStyle?.color?.withOpacity(0.3) ?? Colors.transparent),
         padding: const EdgeInsets.symmetric(horizontal: 8),
       )).toList(),
     );
