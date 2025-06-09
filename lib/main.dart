@@ -4,13 +4,23 @@ import 'Core/RouteManager.dart';
 import 'providers/favorites_provider.dart';
 import 'providers/theme_provider.dart';
 
-// Cores da nova paleta inspirada no TMDB
+// Definindo as cores da sua paleta para fácil acesso
 class AppColors {
-  static const Color tmdbDarkBlue = Color(0xFF0d253f);
-  static const Color tmdbLightBlue = Color(0xFF01b4e4);
-  static const Color tmdbLighterGreen = Color(0xFF90cea1);
-  static const Color almostBlack = Color(0xFF031d33);
-  static const Color nearWhite = Color(0xFFF5F5F5);
+  // Cores Modo Claro
+  static const Color lightBg = Color(0xFFF9F9F9);
+  static const Color lightCard = Color(0xFFFFFFFF);
+  static const Color lightPrimary = Color(0xFF1976D2);
+  static const Color lightText = Color(0xFF111111);
+  static const Color lightTextSecondary = Color(0xFF555555);
+  static const Color lightChip = Color(0xFFE3F2FD);
+
+  // Cores Modo Escuro
+  static const Color darkBg = Color(0xFF121212);
+  static const Color darkCard = Color(0xFF1E1E1E);
+  static const Color darkPrimary = Color(0xFF90CAF9);
+  static const Color darkText = Color(0xFFFFFFFF);
+  static const Color darkTextSecondary = Color(0xFFBBBBBB);
+  static const Color darkChip = Color(0xFF263238);
 }
 
 void main() {
@@ -36,40 +46,69 @@ class MainApp extends StatelessWidget {
           title: 'Filmes Populares',
           themeMode: themeProvider.themeMode,
           
-          // NOVA PALETA - MODO CLARO
+          // TEMA MODO CLARO - Implementação da sua paleta
           theme: ThemeData(
             brightness: Brightness.light,
-            primaryColor: AppColors.tmdbDarkBlue,
-            scaffoldBackgroundColor: AppColors.nearWhite,
+            scaffoldBackgroundColor: AppColors.lightBg,
+            primaryColor: AppColors.lightPrimary,
             colorScheme: const ColorScheme.light(
-              primary: AppColors.tmdbDarkBlue,
-              secondary: AppColors.tmdbLightBlue,
+              primary: AppColors.lightPrimary,
+              secondary: AppColors.lightPrimary, // Usando a mesma cor de destaque
               onPrimary: Colors.white,
-            ),
-            appBarTheme: const AppBarTheme(
-              backgroundColor: AppColors.tmdbDarkBlue,
-              foregroundColor: Colors.white,
-            ),
-          ),
-
-          // NOVA PALETA - MODO ESCURO
-          darkTheme: ThemeData(
-            brightness: Brightness.dark,
-            primaryColor: AppColors.tmdbLightBlue,
-            scaffoldBackgroundColor: AppColors.almostBlack,
-            colorScheme: const ColorScheme.dark(
-              primary: AppColors.tmdbLightBlue,
-              secondary: AppColors.tmdbLighterGreen,
-              surface: AppColors.tmdbDarkBlue, // Cor dos cards e dialogs
-              onPrimary: Colors.black,
+              surface: AppColors.lightCard,
             ),
             cardTheme: const CardTheme(
-              color: AppColors.tmdbDarkBlue,
+              color: AppColors.lightCard,
+              elevation: 2,
             ),
             appBarTheme: const AppBarTheme(
-              backgroundColor: AppColors.tmdbDarkBlue,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.lightCard,
+              foregroundColor: AppColors.lightText, // Cor do título e ícones
+              elevation: 1,
             ),
+            textTheme: const TextTheme(
+              bodyMedium: TextStyle(color: AppColors.lightText),
+              bodySmall: TextStyle(color: AppColors.lightTextSecondary),
+            ),
+            chipTheme: const ChipThemeData(
+              backgroundColor: AppColors.lightChip,
+              labelStyle: TextStyle(color: AppColors.lightPrimary, fontWeight: FontWeight.w600),
+            ),
+            dividerTheme: const DividerThemeData(
+              color: Colors.black12,
+            )
+          ),
+
+          // TEMA MODO ESCURO - Implementação da sua paleta
+          darkTheme: ThemeData(
+            brightness: Brightness.dark,
+            scaffoldBackgroundColor: AppColors.darkBg,
+            primaryColor: AppColors.darkPrimary,
+            colorScheme: const ColorScheme.dark(
+              primary: AppColors.darkPrimary,
+              secondary: AppColors.darkPrimary, // Cor de destaque
+              onPrimary: Colors.black,
+              surface: AppColors.darkCard,
+            ),
+            cardTheme: const CardTheme(
+              color: AppColors.darkCard,
+            ),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: AppColors.darkBg,
+              foregroundColor: AppColors.darkText,
+              elevation: 1,
+            ),
+            textTheme: const TextTheme(
+              bodyMedium: TextStyle(color: AppColors.darkText),
+              bodySmall: TextStyle(color: AppColors.darkTextSecondary),
+            ),
+            chipTheme: const ChipThemeData(
+              backgroundColor: AppColors.darkChip,
+              labelStyle: TextStyle(color: AppColors.darkPrimary, fontWeight: FontWeight.w600),
+            ),
+            dividerTheme: const DividerThemeData(
+              color: Colors.white12,
+            )
           ),
 
           debugShowCheckedModeBanner: false,
