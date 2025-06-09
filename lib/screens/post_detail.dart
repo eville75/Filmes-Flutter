@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
@@ -17,6 +16,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   Future<Movie>? _movieFuture;
   int? _movieId;
   YoutubePlayerController? _youtubeController;
+  bool _showPlayer = false;
+
+  static const Map<int, String> _genreMap = {
+    28: 'Ação', 12: 'Aventura', 16: 'Animação', 35: 'Comédia', 80: 'Crime',
+    99: 'Documentário', 18: 'Drama', 10751: 'Família', 14: 'Fantasia', 36: 'História',
+    27: 'Terror', 10402: 'Música', 9648: 'Mistério', 10749: 'Romance',
+    878: 'Ficção Científica', 10770: 'Filme de TV', 53: 'Suspense', 10752: 'Guerra', 37: 'Faroeste'
+  };
 
   @override
   void didChangeDependencies() {
@@ -34,139 +41,207 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     super.dispose();
   }
 
-  void _initializeYoutubeController(String trailerKey) {
+  void _initializeAndPlayYoutube(String? trailerKey) {
+    if (trailerKey == null || _youtubeController != null) return;
     _youtubeController = YoutubePlayerController(
       initialVideoId: trailerKey,
-      flags: const YoutubePlayerFlags(
-        autoPlay: false,
-        mute: false,
-      ),
+      flags: const YoutubePlayerFlags(autoPlay: true, mute: false),
     );
+    setState(() => _showPlayer = true);
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Movie>(
-      future: _movieFuture,
-      builder: (context, snapshot) {
-        final movie = snapshot.data;
-        if (movie?.trailerKey != null && _youtubeController == null) {
-          _initializeYoutubeController(movie!.trailerKey!);
-        }
+    return Scaffold(
+      body: FutureBuilder<Movie>(
+        future: _movieFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError || !snapshot.hasData) {
+            return Center(child: Text('Erro ao carregar filme: ${snapshot.error}'));
+          }
 
-        return Consumer<FavoritesProvider>(
-          builder: (context, favoritesProvider, child) {
-            final isFavorite = movie != null && favoritesProvider.isFavorite(movie.id);
-
-            return Scaffold(
-              body: buildBody(snapshot, isFavorite, favoritesProvider),
-            );
-          },
-        );
-      },
+          final movie = snapshot.data!;
+          return buildContent(movie);
+        },
+      ),
     );
   }
 
-  Widget buildBody(AsyncSnapshot<Movie> snapshot, bool isFavorite, FavoritesProvider favoritesProvider) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (snapshot.hasError || !snapshot.hasData) {
-      return Center(child: Text('Erro ao carregar filme: ${snapshot.error}'));
-    }
-
-    final movie = snapshot.data!;
+  Widget buildContent(Movie movie) {
     final theme = Theme.of(context);
     final String imageUrl = movie.posterPath.isNotEmpty
         ? 'https://image.tmdb.org/t/p/w780${movie.posterPath}'
         : '';
-
-    return CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          expandedHeight: 250.0,
-          pinned: true,
-          floating: false,
-          elevation: 4,
-          backgroundColor: theme.scaffoldBackgroundColor,
-          flexibleSpace: FlexibleSpaceBar(
-            title: Text(
-              movie.title,
-              style: TextStyle(fontSize: 16, shadows: [
-                Shadow(blurRadius: 4, color: Colors.black.withOpacity(0.7))
-              ]),
-            ),
-            background: Hero(
-              tag: 'poster-${movie.id}',
-              child: imageUrl.isNotEmpty
-                  ? Image.network(imageUrl, fit: BoxFit.cover)
-                  : Container(color: Colors.grey),
-            ),
-          ),
-          actions: [
-            IconButton(
-              icon: Icon(
-                isFavorite ? Icons.favorite : Icons.favorite_border,
-                color: isFavorite ? Colors.red.shade400 : null,
+    
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. Banner de Imagem / Trailer
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              Hero(
+                tag: 'poster-${movie.id}',
+                child: Container(
+                  width: double.infinity,
+                  height: 280,
+                  foregroundDecoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [theme.scaffoldBackgroundColor, Colors.transparent],
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.center,
+                      stops: const [0, 0.5],
+                    ),
+                  ),
+                  child: _showPlayer && _youtubeController != null
+                    ? YoutubePlayer(controller: _youtubeController!)
+                    : imageUrl.isNotEmpty
+                      ? Image.network(imageUrl, fit: BoxFit.cover)
+                      : Container(color: Colors.grey.shade800),
+                ),
               ),
-              onPressed: () => favoritesProvider.toggleFavorite(movie.id),
-            ),
-          ],
-        ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
+              // Botão Play (se o trailer existir e não estiver tocando)
+              if (!_showPlayer && movie.trailerKey != null)
+                GestureDetector(
+                  onTap: () => _initializeAndPlayYoutube(movie.trailerKey!),
+                  child: CircleAvatar(
+                    radius: 35,
+                    backgroundColor: Colors.black.withOpacity(0.6),
+                    child: const Icon(Icons.play_arrow, color: Colors.white, size: 50),
+                  ),
+                ),
+              // Botão de Voltar Flutuante
+              Positioned(
+                top: 40,
+                left: 16,
+                child: CircleAvatar(
+                  backgroundColor: Colors.black.withOpacity(0.5),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // 2. Conteúdo Principal
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (_youtubeController != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                // Título e Botão de Favoritar
+                Consumer<FavoritesProvider>(
+                  builder: (context, favoritesProvider, child) {
+                    final isFavorite = favoritesProvider.isFavorite(movie.id);
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text('Trailer', style: theme.textTheme.titleLarge),
-                        const SizedBox(height: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: YoutubePlayer(controller: _youtubeController!),
+                        Expanded(
+                          child: Text(
+                            movie.title,
+                            style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        IconButton(
+                          iconSize: 30,
+                          icon: Icon(
+                            isFavorite ? Icons.favorite : Icons.favorite_border,
+                            color: isFavorite ? Colors.red.shade400 : theme.iconTheme.color,
+                          ),
+                          onPressed: () {
+                            favoritesProvider.toggleFavorite(movie.id);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(isFavorite ? 'Removido dos favoritos' : 'Adicionado aos favoritos!'),
+                                duration: const Duration(seconds: 2),
+                                backgroundColor: isFavorite ? Colors.red.shade400 : Colors.green.shade600,
+                              ),
+                            );
+                          },
                         ),
                       ],
-                    ),
-                  ),
-
-                Text('Sinopse', style: theme.textTheme.titleLarge),
-                const SizedBox(height: 8),
-                Text(
-                  movie.overview.isNotEmpty ? movie.overview : 'Sinopse não disponível.',
-                  style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
+                    );
+                  },
                 ),
+                const SizedBox(height: 12),
+                
+                // Gêneros
+                _buildGenreChips(movie.genreIds, theme),
                 const SizedBox(height: 24),
                 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildInfoChip(Icons.calendar_today, 'Lançamento', movie.releaseDate, theme),
-                    _buildInfoChip(Icons.star, 'Nota', movie.voteAverage.toStringAsFixed(1), theme),
-                  ],
+                // Info (Nota e Lançamento)
+                _buildInfoRow(movie, theme),
+                const SizedBox(height: 24),
+
+                // Divisor da Sinopse
+                _buildSynopsisDivider(theme),
+                const SizedBox(height: 12),
+
+                // Texto da Sinopse
+                Text(
+                  movie.overview.isNotEmpty ? movie.overview : 'Sinopse não disponível.',
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    height: 1.6,
+                    color: theme.textTheme.bodyLarge?.color?.withOpacity(0.85),
+                  ),
                 ),
               ],
             ),
           ),
-        ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  // Funções Auxiliares (Helpers) para construir a UI
+  Widget _buildInfoRow(Movie movie, ThemeData theme) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        const Icon(Icons.star_rate_rounded, color: Colors.amber, size: 20),
+        const SizedBox(width: 4),
+        Text(movie.voteAverage.toStringAsFixed(1), style: theme.textTheme.titleMedium),
+        const SizedBox(width: 24),
+        Icon(Icons.calendar_today_outlined, color: theme.hintColor, size: 18),
+        const SizedBox(width: 8),
+        Text(movie.releaseDate, style: theme.textTheme.titleMedium),
       ],
     );
   }
 
-  Widget _buildInfoChip(IconData icon, String label, String value, ThemeData theme) {
-    return Column(
+  Widget _buildSynopsisDivider(ThemeData theme) {
+    return Row(
       children: [
-        Icon(icon, color: theme.colorScheme.secondary, size: 28),
-        const SizedBox(height: 4),
-        Text(label, style: theme.textTheme.bodySmall),
-        const SizedBox(height: 2),
-        Text(value, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        const Expanded(child: Divider(thickness: 0.5)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Text("Sinopse", style: theme.textTheme.titleSmall?.copyWith(color: theme.hintColor)),
+        ),
+        const Expanded(child: Divider(thickness: 0.5)),
       ],
+    );
+  }
+
+  Widget _buildGenreChips(List<int> genreIds, ThemeData theme) {
+    final genres = genreIds.map((id) => _genreMap[id]).where((name) => name != null).toList();
+    if (genres.isEmpty) return const SizedBox.shrink();
+    return Wrap(
+      spacing: 8.0,
+      runSpacing: 8.0,
+      children: genres.map((genre) => Chip(
+        label: Text(genre!),
+        backgroundColor: theme.colorScheme.secondary.withOpacity(0.15),
+        labelStyle: TextStyle(color: theme.colorScheme.secondary, fontWeight: FontWeight.w600),
+        side: BorderSide(color: theme.colorScheme.secondary.withOpacity(0.3)),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+      )).toList(),
     );
   }
 }
