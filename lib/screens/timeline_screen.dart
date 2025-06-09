@@ -54,7 +54,6 @@ class _TimelineScreenState extends State<TimelineScreen> {
           future = ApiService.fetchNowPlayingMovies(page: _currentPage);
           break;
         case MovieSortOrder.popular:
-        default:
           future = ApiService.fetchPopularMovies(page: _currentPage);
           break;
       }
@@ -101,7 +100,6 @@ class _TimelineScreenState extends State<TimelineScreen> {
       case MovieSortOrder.nowPlaying:
         return 'Em Cartaz';
       case MovieSortOrder.popular:
-      default:
         return 'Filmes Populares';
     }
   }
