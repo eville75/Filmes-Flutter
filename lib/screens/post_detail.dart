@@ -107,6 +107,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   onTap: () => _initializeAndPlayYoutube(movie.trailerKey!),
                   child: CircleAvatar(
                     radius: 35,
+                    // ignore: deprecated_member_use
                     backgroundColor: Colors.black.withOpacity(0.6),
                     child: const Icon(Icons.play_arrow, color: Colors.white, size: 50),
                   ),
@@ -115,6 +116,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 top: 40,
                 left: 16,
                 child: CircleAvatar(
+                  // ignore: deprecated_member_use
                   backgroundColor: Colors.black.withOpacity(0.5),
                   child: IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -173,6 +175,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   movie.overview.isNotEmpty ? movie.overview : 'Sinopse não disponível.',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     height: 1.6,
+                    // ignore: deprecated_member_use
                     color: theme.textTheme.bodyLarge?.color?.withOpacity(0.85),
                   ),
                 ),
@@ -223,6 +226,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         label: Text(genre!),
         backgroundColor: theme.chipTheme.backgroundColor,
         labelStyle: theme.chipTheme.labelStyle,
+        // ignore: deprecated_member_use
         side: BorderSide(color: theme.chipTheme.labelStyle?.color?.withOpacity(0.3) ?? Colors.transparent),
         padding: const EdgeInsets.symmetric(horizontal: 8),
       )).toList(),

@@ -48,11 +48,11 @@ class SettingsScreen extends StatelessWidget {
                   RichText(
                     text: TextSpan(
                       style: theme.textTheme.bodyMedium,
-                      children: [
-                        const TextSpan(text: 'Desenvolvido por: '),
+                      children: const [
+                        TextSpan(text: 'Desenvolvido por: '),
                         TextSpan(
                           text: 'Eville Vitória Nunes Coelho',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),

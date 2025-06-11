@@ -7,8 +7,6 @@ import '../screens/post_detail.dart';
 enum AppRoute {
   timeline, // Representa a rota inicial, que agora é a shell
   postDetail,
-  // As rotas abaixo não são mais navegadas diretamente pela shell,
-  // mas mantemos a definição para consistência.
   settings,
   search,
   favorites,
@@ -31,9 +29,5 @@ class AppRoutes {
     
     // Rota de detalhes continua a funcionar para a navegação profunda
     getRoute(AppRoute.postDetail): (context) => const PostDetailScreen(),
-    
-    // As outras telas são carregadas dentro da shell, então não precisam
-    // de uma entrada aqui, a menos que você queira acessá-las por um link direto.
-    // Para simplificar, mantemos apenas o essencial.
   };
 }
